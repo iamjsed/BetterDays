@@ -80,8 +80,7 @@ public class ForecastActivityFragment extends Fragment {
             super.onPostExecute(strings);
 
             mForecastArrayAdapter.clear();
-            ArrayList<String> x = new ArrayList<String>(Arrays.asList(strings));
-            mForecastArrayAdapter.addAll(x);
+            mForecastArrayAdapter.addAll(new ArrayList<String>(Arrays.asList(strings)));
 
         }
 
