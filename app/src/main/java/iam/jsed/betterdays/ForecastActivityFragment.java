@@ -15,6 +15,8 @@ import android.widget.Toast;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+import iam.jsed.betterdays.utils.ForecastDataHelper;
+
 /**
  * A placeholder fragment containing a simple view.
  */
@@ -38,7 +40,7 @@ public class ForecastActivityFragment extends Fragment {
                     getActivity(),
                     R.layout.forecast_listitem,
                     R.id.listitem_forecast_textview,
-                    Arrays.asList(fakeData));
+                    new ArrayList<String>());
 
         ListView listView = (ListView) mRootView.findViewById(R.id.forecast_listview);
         listView.setAdapter(mForecastArrayAdapter);
@@ -46,8 +48,8 @@ public class ForecastActivityFragment extends Fragment {
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                String listItemText = (String)adapterView.getItemAtPosition(i);
-                Toast.makeText(getActivity(), listItemText,Toast.LENGTH_SHORT).show();
+                String listItemText = (String) adapterView.getItemAtPosition(i);
+                Toast.makeText(getActivity(), listItemText, Toast.LENGTH_SHORT).show();
 
                 Intent mShowForecastDetailIntent = new Intent(getActivity(), ForecastDetailsActivity.class);
                 mShowForecastDetailIntent.putExtra(Intent.EXTRA_TEXT, listItemText);
@@ -59,6 +61,18 @@ public class ForecastActivityFragment extends Fragment {
         return mRootView;
     }
 
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        updateForecastList();
+    }
+
+    private void updateForecastList() {
+        FetchWeatherForecastTask fetchWeatherForecastTask = new FetchWeatherForecastTask();
+        fetchWeatherForecastTask.execute("Makati");
+    }
+
     public class FetchWeatherForecastTask extends AsyncTask<String, Void, String[]> {
 
         @Override
@@ -66,7 +80,8 @@ public class ForecastActivityFragment extends Fragment {
             super.onPostExecute(strings);
 
             mForecastArrayAdapter.clear();
-            mForecastArrayAdapter.addAll(Arrays.asList(strings));
+            ArrayList<String> x = new ArrayList<String>(Arrays.asList(strings));
+            mForecastArrayAdapter.addAll(x);
 
         }
 
@@ -75,7 +90,8 @@ public class ForecastActivityFragment extends Fragment {
 
             // TODO: Externalize the method of fetching and parsing the json weather data.
 
-            return new String[0];
+            return new ForecastDataHelper().getWeeklyForecast(strings[0]);
+
         }
     }
 }
