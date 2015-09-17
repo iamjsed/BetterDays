@@ -26,9 +26,9 @@ public class ForecastDetailsActivityFragment extends Fragment {
     private final String LOG_TAG = ForecastDetailsActivityFragment.class.getSimpleName();
 
     private String mForecastString;
-    private final String SHARE_HASHTAG = "#BetterDays";
+    private final String SHARE_HASHTAG = " - #BetterDays";
     public ForecastDetailsActivityFragment() {
-        //setHasOptionsMenu(true);
+        setHasOptionsMenu(true);
     }
 
     @Override
@@ -50,7 +50,7 @@ public class ForecastDetailsActivityFragment extends Fragment {
 
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-        super.onCreateOptionsMenu(menu, inflater);
+        //super.onCreateOptionsMenu(menu, inflater);
 
         inflater.inflate(R.menu.menu_forecast_details, menu);
 
