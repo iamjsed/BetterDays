@@ -16,6 +16,7 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.text.SimpleDateFormat;
 import java.util.Iterator;
 
@@ -30,19 +31,33 @@ public class ForecastDataHelper {
     private final String LOG_TAG = ForecastDataHelper.class.getSimpleName();
 
     private String BaseUrl = "http://api.openweathermap.org/data/2.5/forecast/daily?";
-    private String TemperatureUnit = "metric";
-    private int ForecastDays = 7;
+    private final String TEMPERATURE_UNIT = "metric";
+    private final int FORECAST_DAYS = 7;
+    private final double IMPERIAL_TEMP_MILTIPLIER = 1.8;
+    private final int IMPERIAL_TEMP_BASE = 32;
+    private final double KELVIN_OFFSET = 273.15;
+    private String prefLocation;
+    private String prefUnit;
+    private int prefForecastDays;
 
     private HttpURLConnection httpURLConnection;
     private BufferedReader bufferedReader;
 
-    public String[] getWeeklyForecast(String locationName) {
+
+    public ForecastDataHelper(String location, String unit) {
+        this.prefLocation = location;
+        this.prefUnit = unit;
+    }
+
+    public String[] getWeeklyForecast() {
 
         try {
 
             URL url = new URL(BaseUrl + "q=" +
-                    locationName + "&mode=json&unit=" +
-                    TemperatureUnit + "&cnt=" + Integer.toString(ForecastDays) );
+                    URLEncoder.encode(this.prefLocation) + "&mode=json&unit=" +
+                    URLEncoder.encode(this.TEMPERATURE_UNIT) + "&cnt=" + URLEncoder.encode(Integer.toString(this.FORECAST_DAYS)));
+
+            Log.d(LOG_TAG, "Fetching: " +url.toString());
 
             httpURLConnection = (HttpURLConnection) url.openConnection();
             httpURLConnection.setRequestMethod("GET");
@@ -67,7 +82,7 @@ public class ForecastDataHelper {
             }
 
             try {
-                retval = getWeatherDataFromJson(sb.toString(), ForecastDays);
+                retval = getWeatherDataFromJson(sb.toString(), FORECAST_DAYS);
             } catch (JSONException jex) {
                 Log.e(LOG_TAG, jex.getMessage());
             }
@@ -95,12 +110,24 @@ public class ForecastDataHelper {
     /**
      * Prepare the weather high/lows for presentation.
      */
-    private String formatHighLows(double high, double low) {
+    private String formatHighLows(double high, double low, String tempUnit) {
         // For presentation, assume the user doesn't care about tenths of a degree.
-        long roundedHigh = Math.round(high);
-        long roundedLow = Math.round(low);
+        // The values returned by the openweathermap api is in Kelvin unit.
 
-        String highLowStr = roundedHigh + "/" + roundedLow;
+        long roundedHigh;
+        long roundedLow;
+        String highLowStr;
+
+        if ( tempUnit.compareToIgnoreCase("imperial") == 0 ) {
+            roundedHigh = Math.round( IMPERIAL_TEMP_BASE + ( ( high - KELVIN_OFFSET ) * IMPERIAL_TEMP_MILTIPLIER) );
+            roundedLow = Math.round( IMPERIAL_TEMP_BASE + ( ( low - KELVIN_OFFSET ) * IMPERIAL_TEMP_MILTIPLIER) );
+            highLowStr = roundedHigh + " F / " + roundedLow + " F";
+        } else {
+            roundedHigh= Math.round( high - KELVIN_OFFSET );
+            roundedLow= Math.round( low - KELVIN_OFFSET );
+            highLowStr = roundedHigh + " C / " + roundedLow + " C";
+        }
+
         return highLowStr;
     }
 
@@ -170,12 +197,12 @@ public class ForecastDataHelper {
             double high = temperatureObject.getDouble(OWM_MAX);
             double low = temperatureObject.getDouble(OWM_MIN);
 
-            highAndLow = formatHighLows(high, low);
+            highAndLow = formatHighLows(high, low, this.prefUnit);
             resultStrs[i] = day + " - " + description + " - " + highAndLow;
         }
 
         for (String s : resultStrs) {
-            Log.v(LOG_TAG, "Forecast entry: " + s);
+            Log.d(LOG_TAG, "Forecast entry: " + s);
         }
         return resultStrs;
 

@@ -1,12 +1,20 @@
 package iam.jsed.betterdays;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.net.Uri;
+import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import java.net.URLEncoder;
+
 public class ForecastActivity extends AppCompatActivity {
+
+    private final String LOG_TAG = ForecastActivity.class.getSimpleName();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,8 +41,31 @@ public class ForecastActivity extends AppCompatActivity {
         if (item.getItemId() == R.id.action_settings) {
             startActivity(new Intent(this, SettingsActivity.class));
             return true;
+        } else if ( item.getItemId() == R.id.action_view_in_map ) {
+            openPreferedLocationInMap();
         }
 
         return super.onOptionsItemSelected(item);
     }
+
+    private void openPreferedLocationInMap() {
+        SharedPreferences sharedPrefrence = PreferenceManager.getDefaultSharedPreferences(this);
+        String location = sharedPrefrence.getString(
+                getString(R.string.pref_location_key),
+                getString(R.string.pref_location_default));
+
+        Uri geoLocation = Uri.parse("geo:0,0?").buildUpon()
+                .appendQueryParameter("q", URLEncoder.encode(location))
+                .build();
+
+        Intent getLocationIntent = new Intent(Intent.ACTION_VIEW);
+        getLocationIntent.setData(geoLocation);
+
+        if ( getLocationIntent.resolveActivity(getPackageManager()) != null ) {
+            startActivity(getLocationIntent);
+        } else {
+            Log.d(LOG_TAG, "Unable to handle request for " + location);
+        }
+    }
+
 }

@@ -1,9 +1,12 @@
 package iam.jsed.betterdays;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
+import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
@@ -15,6 +18,7 @@ import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 import iam.jsed.betterdays.utils.ForecastDataHelper;
 
@@ -23,6 +27,7 @@ import iam.jsed.betterdays.utils.ForecastDataHelper;
  */
 public class ForecastActivityFragment extends Fragment {
 
+    private final String LOG_TAG = ForecastActivityFragment.class.getSimpleName();
 
     ArrayAdapter<String> mForecastArrayAdapter;
 
@@ -64,7 +69,6 @@ public class ForecastActivityFragment extends Fragment {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-
         return super.onOptionsItemSelected(item);
     }
 
@@ -75,11 +79,29 @@ public class ForecastActivityFragment extends Fragment {
     }
 
     private void updateForecastList() {
+
+        SharedPreferences sharedPrefrence = PreferenceManager.getDefaultSharedPreferences(getActivity());
+
+
+        String[] pref = new String[2];
+
+        pref[0] = sharedPrefrence.getString(
+                getString(R.string.pref_location_key),
+                getString(R.string.pref_location_default));
+
+        pref[1] = sharedPrefrence.getString(
+                getString(R.string.pref_unit_key),
+                getString(R.string.pref_unit_default));
+
+        Log.d(LOG_TAG, "Location: " + pref[0] + ", Unit: " + pref[1]);
+
         FetchWeatherForecastTask fetchWeatherForecastTask = new FetchWeatherForecastTask();
-        fetchWeatherForecastTask.execute("Makati");
+        fetchWeatherForecastTask.execute(pref);
     }
 
     public class FetchWeatherForecastTask extends AsyncTask<String, Void, String[]> {
+
+
 
         @Override
         protected void onPostExecute(String[] strings) {
@@ -91,11 +113,13 @@ public class ForecastActivityFragment extends Fragment {
         }
 
         @Override
-        protected String[] doInBackground(String... strings) {
+        protected String[] doInBackground(String[] strings) {
 
             // TODO: Externalize the method of fetching and parsing the json weather data.
 
-            return new ForecastDataHelper().getWeeklyForecast(strings[0]);
+            ForecastDataHelper forecastData = new ForecastDataHelper(strings[0], strings[1]);
+
+            return forecastData.getWeeklyForecast();
 
         }
     }
